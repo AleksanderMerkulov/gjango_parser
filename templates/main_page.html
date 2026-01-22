@@ -1,0 +1,234 @@
+{% load querrystring %}
+
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Данные торгов</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+        }
+
+        .panel {
+            border: 1px solid #ddd;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #333;
+        }
+
+        input, select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        button, a.btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #888;
+            background: #f7f7f7;
+            cursor: pointer;
+            text-decoration: none;
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #e3e3e3;
+            padding: 8px;
+            font-size: 13px;
+        }
+
+        th {
+            background: #fafafa;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .muted {
+            color: #777;
+        }
+
+        .pager {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        @media (max-width: 1100px) {
+            .grid {
+                grid-template-columns: repeat(2, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<h1>Данные торгов</h1>
+
+<form class="panel" method="get">
+    <div class="grid">
+        <div class="row">
+            {{ filter_form.date_from.label_tag }}
+            {{ filter_form.date_from }}
+        </div>
+        <div class="row">
+            {{ filter_form.date_to.label_tag }}
+            {{ filter_form.date_to }}
+        </div>
+
+        <div class="row">
+            {{ filter_form.price_from.label_tag }}
+            {{ filter_form.price_from }}
+        </div>
+        <div class="row">
+            {{ filter_form.price_to.label_tag }}
+            {{ filter_form.price_to }}
+        </div>
+
+        <div class="row">
+            {{ filter_form.product.label_tag }}
+            {{ filter_form.product }}
+            <a href="{% url 'add_product' %}">Добавить</a>
+        </div>
+
+        <div class="row" style="grid-column: span 3;">
+            {{ filter_form.instrument_codes.label_tag }}
+            {{ filter_form.instrument_codes }}
+        </div>
+    </div>
+
+    {% if filter_form.errors %}
+        <div class="muted" style="margin-top:10px;">
+            {{ filter_form.errors }}
+        </div>
+    {% endif %}
+
+    <div class="actions">
+        <button type="submit">Применить фильтры</button>
+        <a class="btn" href="{% url 'home' %}">Сбросить</a>
+        <span class="muted">Найдено: {{ page_obj.paginator.count }}</span>
+    </div>
+</form>
+
+{% comment %}
+    Логика переключения направления сортировки:
+    - если кликаем по текущему столбцу, инвертируем dir
+    - иначе ставим dir=asc (или desc — как хотите)
+  {% endcomment %}
+
+<table>
+    <thead>
+    <tr>
+        {% for label in labels %}
+        	<th>{{ label }} <a href="?{% qs request sort=label dir="desc" page=1 %}"> #</a></th>
+        {% endfor %}
+        
+    </tr>
+    </thead>
+
+
+    <tbody>
+    {% for r in rows %}
+        <tr>
+            <td class="nowrap">{{ r.instrument_code }} </td>
+            <td>{{ r.instrument_name }}</td>
+            <td>{{ r.delivery_basis }}</td>
+
+            <td class="num">{{ r.contracts_count|default:"—" }}</td>
+            <td class="num">{{ r.contracts_volume_rub|default:"—" }}</td>
+            
+            <td>{{ r.market_change_rub }}</td>
+            <td>{{ r.market_change_pct }}</td>
+            
+            
+            <td class="num">{{ r.min_price|default:"—" }}</td>
+            <td class="num">{{ r.avg_price|default:"—" }}</td>
+            <td class="num">{{ r.max_price|default:"—" }}</td>
+            <td class="num">{{ r.market_price|default:"—" }}</td>
+            
+            <td>{{ r.best_offer }}</td>
+            <td>{{ r.best_bid }}</td>
+            
+            <td>{{ r.contracts_count }}</td>
+
+            <td class="nowrap">{{ r.date }}</td>
+            <td class="nowrap">{{ r.product }}</td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="10" class="muted">Нет данных по выбранным фильтрам.</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="pager">
+    {% if page_obj.has_previous %}
+        <a class="btn" href="?{% qs request page=1 %}">Первая</a>
+        <a class="btn" href="?{% qs request page=page_obj.previous_page_number %}">Назад</a>
+    {% endif %}
+
+    <span class="muted">
+      Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a class="btn" href="?{% qs request page=page_obj.next_page_number %}">Вперёд</a>
+        <a class="btn" href="?{% qs request page=page_obj.paginator.num_pages %}">Последняя</a>
+    {% endif %}
+</div>
+</body>
+</html>
