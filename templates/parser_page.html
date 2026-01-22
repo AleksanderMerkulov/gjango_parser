@@ -2,87 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <title>Данные торгов</title>
+  <title>Парсинг</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    .panel { border: 1px solid #ddd; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 12px; }
-    .row { display: flex; flex-direction: column; gap: 6px; }
-    label { font-size: 12px; color: #333; }
-    input, select { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
-    .actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
-    button, a.btn { padding: 8px 12px; border-radius: 6px; border: 1px solid #888; background: #f7f7f7; cursor: pointer; text-decoration: none; color: #000; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #e3e3e3; padding: 8px; font-size: 13px; }
-    th { background: #fafafa; text-align: left; white-space: nowrap; }
-    th a { color: inherit; text-decoration: none; }
-    .muted { color: #777; }
-    .pager { margin-top: 12px; display: flex; gap: 10px; align-items: center; }
-    .nowrap { white-space: nowrap; }
-    .num { text-align: right; font-variant-numeric: tabular-nums; }
-    @media (max-width: 1100px) {
-      .grid { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
-    }
-    @media (max-width: 600px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  
 </head>
 
 <body>
-  <h1>Данные торгов</h1>
-
-  <form class="panel" method="get">
-    <div class="grid">
-      <div class="row">
-        {{ filter_form.date_from.label_tag }}
-        {{ filter_form.date_from }}
-      </div>
-      <div class="row">
-        {{ filter_form.date_to.label_tag }}
-        {{ filter_form.date_to }}
-      </div>
-
-      <div class="row">
-        {{ filter_form.price_from.label_tag }}
-        {{ filter_form.price_from }}
-      </div>
-      <div class="row">
-        {{ filter_form.price_to.label_tag }}
-        {{ filter_form.price_to }}
-      </div>
-
-      <div class="row">
-        {{ filter_form.product.label_tag }}
-        {{ filter_form.product }}
-      </div>
-
-      <div class="row" style="grid-column: span 3;">
-        {{ filter_form.instrument_codes.label_tag }}
-        {{ filter_form.instrument_codes }}
-      </div>
-    </div>
-
-    {% if filter_form.errors %}
-      <div class="muted" style="margin-top:10px;">
-        {{ filter_form.errors }}
-      </div>
-    {% endif %}
-
-    <div class="actions">
-      <button type="submit">Применить фильтры</button>
-      <a class="btn" href="">Сбросить</a>
-      <a class="btn" href="{% url 'parser' %}">Обновить БД</a>
-      <span class="muted">Найдено: {{ page_obj.paginator.count }}</span>
-    </div>
-  </form>
-
-  {% comment %}
-    Логика переключения направления сортировки:
-    - если кликаем по текущему столбцу, инвертируем dir
-    - иначе ставим dir=asc (или desc — как хотите)
-  {% endcomment %}
+  
 
   
 </body>

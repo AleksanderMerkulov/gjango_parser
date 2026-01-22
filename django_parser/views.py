@@ -4,7 +4,7 @@ from itertools import product
 
 import requests
 from django.db import transaction
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import pandas as pd
 from datetime import date, timedelta
 from django.urls import reverse_lazy
@@ -19,10 +19,7 @@ from django_parser.models import MarketInstrumentSnapshot
 
 def generate_dates(days: int = 10, direction: str = "past", start: date | None = None):
     """
-    Генерирует даты, начиная со start (по умолчанию сегодня), включая start.
-    direction:
-      - "past":  start, start-1, ..., start-days
-      - "future": start, start+1, ..., start+days
+    Генерирует даты, начиная со start (по умолчанию сегодня), включая start и days.
     """
 
     start = date.today()
@@ -43,15 +40,9 @@ def find_row_index_by_marker_xls(
     start_index: int = 0,
     contains: bool = False,
 ) -> int | None:
-    """
-    Открывает .xls и ищет строку-маркер в указанной колонке (по умолчанию B),
-    сравнение выполняется по lower(). Возвращает индекс строки (0-based) или None.
 
-    Требуется: pip install pandas xlrd
-    """
     col_idx = ord(column.upper()) - ord("A")
 
-    # header=None -> читаем "как есть", без попыток сделать первую строку заголовком
     df = pd.read_excel(xls_path, sheet_name=sheet, header=None, engine="xlrd")
 
     # Берём нужную колонку, приводим к строке и lower()
@@ -68,11 +59,7 @@ def find_row_index_by_marker_xls(
         return int(matches.idxmax())  # индекс первой найденной строки
     return None
 
-def dash_to_none(v: any) -> any:
-    """
-    Если пришло '-' (или пустая строка) => None.
-    Иначе возвращает исходное значение.
-    """
+def dash_to_none(v: any):
     if v is None:
         return None
     if isinstance(v, str):
@@ -90,11 +77,9 @@ def to_decimal(v: any):
     if isinstance(v, Decimal):
         return v
     if isinstance(v, (int, float)):
-        # float лучше не использовать, но поддержим
         return Decimal(str(v))
 
     s = str(v).strip()
-    # Часто в источниках бывает запятая как разделитель
     s = s.replace(" ", "").replace(",", ".")
     try:
         return Decimal(s)
@@ -117,20 +102,15 @@ def to_int(v: any):
 
 
 @transaction.atomic
-def upsert_snapshot(row: dict[str, any], date_create) -> tuple[MarketInstrumentSnapshot, bool]:
-    """
-    row: словарь данных (значения могут быть строками).
-    Возвращает: (объект, created)
-    """
+def upsert_snapshot(row: dict[str, any], date_create):
     row = row[1]
     instrument_code = row[1]
     instrument_name = row[2]
     dt = date_create
 
-    # Эти поля обязательны (null=False). Если в источнике '-' — логичнее пропустить строку/упасть.
     if not instrument_code or not instrument_name or dt is None:
         raise ValueError(
-            "Обязательные поля instrument_code, instrument_name, date должны быть заданы и не равны '-'"
+            "Обязательные поля instrument_code, instrument_name, date должны быть заданы"
         )
 
     product_name = row[2].split(",")[0]
@@ -162,7 +142,7 @@ def upsert_snapshot(row: dict[str, any], date_create) -> tuple[MarketInstrumentS
 
 def parser(request):
 
-    dates = generate_dates(5)
+    dates = generate_dates(10)
     for d in dates:
         date_formated = build_ts(d)
         r = requests.get(f'https://spimex.com/files/trades/result/upload/reports/oil_xls/oil_xls_{date_formated}162000.xls')
@@ -191,13 +171,8 @@ def parser(request):
                 snapshot, created = upsert_snapshot(row, d)
         else:
             print(f'{r.status_code}: {d}')
-    return render(request, 'parser_page.html')
-
-def download_and_add_to_db():
-    pass
-
-def update_db():
-    pass
+    return redirect(reverse_lazy('home'))
+    # return render(request, 'parser_page.html')
 
 class SnapshotListView(ListView):
     model = MarketInstrumentSnapshot
@@ -205,20 +180,40 @@ class SnapshotListView(ListView):
     context_object_name = "rows"
     paginate_by = 50
 
-    # Разрешённые поля сортировки (whitelist)
-    ALLOWED_SORT = {
-        "Дата",
-        "КодИнструмента",
-        "НаименованиеИнструмента",
-        "product",
-        "market_price",
-        "min_price",
-        "avg_price",
-        "max_price",
-        "contracts_count",
-        "contracts_volume_rub",
-        "contracts_volume_ei",
-    }
+    ALLOWS_TO_FILTER = [
+        "КодИнструмента", "НаименованиеИнструмента", "БазисПоставки"
+    ]
+
+    def get_attr_name_by_rus_name(self, sort_name_rus, prefix):
+        """
+         Возвращает английское название атрибута для фильтра
+         """
+        if sort_name_rus == "БазисПоставки":
+            return f"{prefix}delivery_basis"
+        elif sort_name_rus == "КодИнструмента":
+            return f"{prefix}instrument_code"
+        elif sort_name_rus == "НаименованиеИнструмента":
+            return f"{prefix}instrument_name"
+        elif sort_name_rus == "ОбъемДоговоровЕИ":
+            return f"{prefix}contracts_volume_ei"
+        elif sort_name_rus == "ОбъемДоговоровРуб":
+            return f"{prefix}contracts_volume_rub"
+        elif sort_name_rus == "ИзмРынРуб":
+            return f"{prefix}market_change_rub"
+        elif sort_name_rus == "ИзмРынПроц":
+            return f"{prefix}market_change_pct"
+        elif sort_name_rus == "МинЦена":
+            return f"{prefix}min_price"
+        elif sort_name_rus == "СреднЦена":
+            return f"{prefix}avg_price"
+        elif sort_name_rus == "МаксЦена":
+            return f"{prefix}max_price"
+        elif sort_name_rus == "РынЦена":
+            return f"{prefix}market_price"
+        elif sort_name_rus == "КоличествоДоговоров":
+            return f"{prefix}contracts_count"
+        else:
+            return f"date"
 
     def get_queryset(self):
         qs = MarketInstrumentSnapshot.objects.all()
@@ -247,20 +242,13 @@ class SnapshotListView(ListView):
 
         # Сортировка
         sort = self.request.GET.get("sort") or "date"
-        direction = self.request.GET.get("dir") or "desc"
+        direction = self.request.GET.get("dir") or "max"
 
-        if sort not in self.ALLOWED_SORT:
-            sort = "date"
-            self.sort_name = "date"
 
-        prefix = "-" if direction == "desc" else ""
-        if sort == "Дата":
-            self.sort_name = f"{prefix}date"
-        if sort == "КодИнструмента":
-            self.sort_name = f"{prefix}instrument_code"
-        if sort == "НаименованиеИнструмента":
-            self.sort_name = f"{prefix}instrument_name"
-        qs = qs.order_by(self.sort_name, "instrument_code")
+
+        prefix = "-" if direction == "max" else ""
+        sort_name = self.get_attr_name_by_rus_name(sort, prefix)
+        qs = qs.order_by(sort_name, "instrument_code")
 
         self.current_sort = sort
         self.current_dir = direction

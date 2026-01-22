@@ -18,8 +18,8 @@ class SnapshotFilterForm(forms.Form):
     instrument_codes = forms.MultipleChoiceField(
         label="Инструменты",
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": "8"}),
-        choices=(),  # динамически наполним
+        widget=forms.SelectMultiple(attrs={"size": "8", "class":"form-control"}),
+        choices=(),
     )
 
     price_from = forms.DecimalField(
@@ -28,7 +28,7 @@ class SnapshotFilterForm(forms.Form):
         max_digits=20,
         decimal_places=6,
         min_value=Decimal("0"),
-        widget=forms.NumberInput(attrs={"step": "0.000001"}),
+        widget=forms.NumberInput(attrs={"step": "10000.00"}),
     )
     price_to = forms.DecimalField(
         label="РынЦена до",
@@ -36,19 +36,18 @@ class SnapshotFilterForm(forms.Form):
         max_digits=20,
         decimal_places=6,
         min_value=Decimal("0"),
-        widget=forms.NumberInput(attrs={"step": "0.000001"}),
+        widget=forms.NumberInput(attrs={"step": "10000.00"}),
     )
 
     product = forms.ChoiceField(
         label="Товар",
         required=False,
-        choices=(),  # динамически наполним
+        choices=(),
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Инструменты: показываем "CODE — NAME", фильтруем по instrument_code
         instruments = (
             MarketInstrumentSnapshot.objects
             .values_list("instrument_code", "instrument_name")
@@ -59,14 +58,13 @@ class SnapshotFilterForm(forms.Form):
             (code, f"{code} — {name}") for code, name in instruments
         ]
 
-        # Товары (product) — distinct список
         products = (
             Products.objects
             .values_list("name", flat=True)
             .distinct()
             .order_by("name")
         )
-        self.fields["product"].choices = [("", "— любой —")] + [(p, p) for p in products]
+        self.fields["product"].choices = [("", "любой")] + [(p, p) for p in products]
 
     def clean(self):
         cleaned = super().clean()

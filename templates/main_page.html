@@ -6,174 +6,73 @@
     <meta charset="utf-8">
     <title>Данные торгов</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 24px;
-        }
 
-        .panel {
-            border: 1px solid #ddd;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(200px, 1fr));
-            gap: 12px;
-        }
-
-        .row {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 12px;
-            color: #333;
-        }
-
-        input, select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        button, a.btn {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #888;
-            background: #f7f7f7;
-            cursor: pointer;
-            text-decoration: none;
-            color: #000;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #e3e3e3;
-            padding: 8px;
-            font-size: 13px;
-        }
-
-        th {
-            background: #fafafa;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        th a {
-            color: inherit;
-            text-decoration: none;
-        }
-
-        .muted {
-            color: #777;
-        }
-
-        .pager {
-            margin-top: 12px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .nowrap {
-            white-space: nowrap;
-        }
-
-        .num {
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-
-        @media (max-width: 1100px) {
-            .grid {
-                grid-template-columns: repeat(2, minmax(200px, 1fr));
-            }
-        }
-
-        @media (max-width: 600px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 
 <body>
-<h1>Данные торгов</h1>
 
-<form class="panel" method="get">
-    <div class="grid">
-        <div class="row">
-            {{ filter_form.date_from.label_tag }}
+<form class="panel p-4" method="get">
+    <h1 class="mb-3">Данные торгов <a class="btn btn-success" style="font-size: 10px" href="{% url 'parser' %}">обновить</a></h1>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3 d-flex flex-column">
+            <label for="{{ filter_form.date_from.id_for_label }}"
+                   class="form-label">{{ filter_form.date_from.label }}</label>
             {{ filter_form.date_from }}
         </div>
-        <div class="row">
-            {{ filter_form.date_to.label_tag }}
+        <div class="col-md-3 d-flex flex-column">
+            <label for="{{ filter_form.date_to.id_for_label }}"
+                   class="form-label">{{ filter_form.date_to.label }}</label>
             {{ filter_form.date_to }}
         </div>
-
-        <div class="row">
-            {{ filter_form.price_from.label_tag }}
+        <div class="col-md-3 d-flex flex-column">
+            <label for="{{ filter_form.price_from.id_for_label }}"
+                   class="form-label">{{ filter_form.price_from.label }}</label>
             {{ filter_form.price_from }}
         </div>
-        <div class="row">
-            {{ filter_form.price_to.label_tag }}
+        <div class="col-md-3 d-flex flex-column">
+            <label for="{{ filter_form.price_to.id_for_label }}"
+                   class="form-label">{{ filter_form.price_to.label }}</label>
             {{ filter_form.price_to }}
         </div>
+    </div>
 
-        <div class="row">
-            {{ filter_form.product.label_tag }}
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <label for="{{ filter_form.product.id_for_label }}"
+                   class="form-label">{{ filter_form.product.label }}</label>
             {{ filter_form.product }}
-            <a href="{% url 'add_product' %}">Добавить</a>
+            <a href="{% url 'add_product' %}" class="form-text">Добавить</a>
         </div>
 
-        <div class="row" style="grid-column: span 3;">
-            {{ filter_form.instrument_codes.label_tag }}
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <label for="{{ filter_form.instrument_codes.id_for_label }}"
+                   class="form-label">{{ filter_form.instrument_codes.label }}</label>
             {{ filter_form.instrument_codes }}
         </div>
     </div>
 
     {% if filter_form.errors %}
-        <div class="muted" style="margin-top:10px;">
+        <div class="alert alert-danger mt-3">
             {{ filter_form.errors }}
         </div>
     {% endif %}
 
-    <div class="actions">
-        <button type="submit">Применить фильтры</button>
-        <a class="btn" href="{% url 'home' %}">Сбросить</a>
-        <span class="muted">Найдено: {{ page_obj.paginator.count }}</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary">Применить фильтры</button>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Сбросить</a>
+        <span class="text-muted ms-2">Найдено: {{ page_obj.paginator.count }}</span>
     </div>
 </form>
 
-{% comment %}
-    Логика переключения направления сортировки:
-    - если кликаем по текущему столбцу, инвертируем dir
-    - иначе ставим dir=asc (или desc — как хотите)
-  {% endcomment %}
-
-<table>
+<table class="table table-hover">
     <thead>
     <tr>
         {% for label in labels %}
-        	<th>{{ label }} <a href="?{% qs request sort=label dir="desc" page=1 %}"> #</a></th>
+        	<th class="table-primary"><a href="?{% qs request sort=label dir="max" page=1 current_sort=current_sort %}">{{ label }}</a></th>
         {% endfor %}
         
     </tr>
@@ -190,8 +89,8 @@
             <td class="num">{{ r.contracts_count|default:"—" }}</td>
             <td class="num">{{ r.contracts_volume_rub|default:"—" }}</td>
             
-            <td>{{ r.market_change_rub }}</td>
-            <td>{{ r.market_change_pct }}</td>
+            <td>{{ r.market_change_rub|default:"—" }}</td>
+            <td>{{ r.market_change_pct|default:"—" }}</td>
             
             
             <td class="num">{{ r.min_price|default:"—" }}</td>
@@ -199,10 +98,10 @@
             <td class="num">{{ r.max_price|default:"—" }}</td>
             <td class="num">{{ r.market_price|default:"—" }}</td>
             
-            <td>{{ r.best_offer }}</td>
-            <td>{{ r.best_bid }}</td>
+            <td>{{ r.best_offer|default:"—" }}</td>
+            <td>{{ r.best_bid|default:"—" }}</td>
             
-            <td>{{ r.contracts_count }}</td>
+            <td>{{ r.contracts_count|default:"—" }}</td>
 
             <td class="nowrap">{{ r.date }}</td>
             <td class="nowrap">{{ r.product }}</td>

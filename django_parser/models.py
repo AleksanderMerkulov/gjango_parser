@@ -29,13 +29,10 @@ class MarketInstrumentSnapshot(models.Model):
     best_offer = models.DecimalField("ЛучшПредложение", max_digits=20, decimal_places=6, blank=True, null=True)
     best_bid = models.DecimalField("ЛучшСпрос", max_digits=20, decimal_places=6, blank=True, null=True)
 
-    # Количество договоров
     contracts_count = models.PositiveIntegerField("КоличествоДоговоров", blank=True, null=True)
 
-    # Дата среза/торгов
     date = models.DateField("Дата", db_index=True)
 
-    # Связь с товаром
     product = models.CharField("Товар", max_length=255)
 
     class Meta:
