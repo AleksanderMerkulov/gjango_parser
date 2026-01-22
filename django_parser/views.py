@@ -172,7 +172,6 @@ def parser(request):
         else:
             print(f'{r.status_code}: {d}')
     return redirect(reverse_lazy('home'))
-    # return render(request, 'parser_page.html')
 
 class SnapshotListView(ListView):
     model = MarketInstrumentSnapshot
@@ -180,9 +179,6 @@ class SnapshotListView(ListView):
     context_object_name = "rows"
     paginate_by = 50
 
-    ALLOWS_TO_FILTER = [
-        "КодИнструмента", "НаименованиеИнструмента", "БазисПоставки"
-    ]
 
     def get_attr_name_by_rus_name(self, sort_name_rus, prefix):
         """
@@ -234,7 +230,6 @@ class SnapshotListView(ListView):
                 qs = qs.filter(product__contains=cd["product"])
 
             # Диапазон по рыночной цене (market_price)
-            # Если задан диапазон — отсекаем NULL, чтобы фильтр был предсказуемым
             if cd.get("price_from") is not None:
                 qs = qs.filter(market_price__isnull=False, market_price__gte=cd["price_from"])
             if cd.get("price_to") is not None:
